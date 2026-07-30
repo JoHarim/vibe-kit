@@ -36,10 +36,10 @@
 - **트랙 2종.** 서버가 필요한 프로젝트(로그인·여러 사람이 같은 데이터·결제·숨길 키·서버 자동화)는 **풀스택 트랙**(Next.js+Supabase — 아래 규칙 전부), 데이터가 쓰는 사람 기기에만 있으면 되는 프로젝트는 **정적 트랙**(바닐라 JS + localStorage + 정적 배포)이다. 어느 트랙인지는 기획서(`plan.md` 헤더·`docs/plan/01-prd.md`)의 스택 표기를 따른다.
 - **(정적 트랙)** 프레임워크·빌드 도구·번들러를 새로 들이지 마라 — 지금 구조 그대로 간다. localStorage 는 한 번 읽어 메모리에서 다룬다(루프 안에서 매번 `JSON.parse` 금지 — N+1 의 로컬판).
 - 웹 = `apps/web` (Next.js App Router) · 모바일 = `apps/mobile` (Expo).
-- 저장이 필요하면 `packages/integrations/supabase` 를 쓴다. 아주 간단하면 `google-sheets`.
+- **(풀스택 트랙)** 저장이 필요하면 `packages/integrations/supabase` 를 쓴다. 아주 간단하면 `google-sheets`. (정적 트랙의 저장은 localStorage — 위 트랙 규칙.)
 - 키는 항상 `.env` 에서 읽는다. 코드에 키를 박지 마라. Supabase 키 이름은 `SUPABASE_URL` / `SUPABASE_ANON_KEY`.
 - **공식 API 가 없는 서비스는 스크래핑·비공식 자동화로 잇지 마라** (네이버 플레이스·카카오톡 개인 채팅 등 — 계정 정지·법적 위험). blueprint 의 공식 문 판정(7-6a)을 따르고, 미개방이면 대안(수동 입력·공식 채널·다른 서비스)을 제시한다.
-- **테이블 만들기·바꾸기(SQL)는 CLI 없이 간다.** AI 가 SQL 전문을 만들어 보여주면, **실행은 사용자가 Supabase 대시보드 → SQL Editor 에 붙여넣어서** 한다("창고에 선반 놓기"로 안내). Supabase CLI·Vercel CLI 설치를 권하지 마라 — 이 킷의 기본 경로는 웹 콘솔이다. 실행 후 Table Editor 에서 표가 생겼는지 사용자가 눈으로 확인하게 하라.
+- **테이블 만들기·바꾸기(SQL)는 CLI 없이 간다.** AI 가 SQL 전문을 만들어 보여주면, **실행은 사용자가 Supabase 대시보드 → SQL Editor 에 붙여넣어서** 한다("창고에 선반 놓기"로 안내). Supabase CLI·Vercel CLI 설치를 권하지 마라 — 이 킷의 기본 경로는 웹 콘솔이다. (예외: **Netlify CLI 는 정적 트랙의 기본 배포 도구**라 설치·사용을 권해도 된다 — `netlify deploy --prod`.) 실행 후 Table Editor 에서 표가 생겼는지 사용자가 눈으로 확인하게 하라.
 - **`NEXT_PUBLIC_` 접두사는 이 킷에서 금지.** 환경변수를 새로 만들 때도 붙이지 마라. 브라우저(화면 코드)에서 읽어야 하는 공개 키는 `apps/web/next.config.mjs` 의 `env` 목록에 추가하는 방식으로만 처리한다.
 - 비교는 `===` / `!==` 만. `==` / `!=` 금지. null 은 명시적으로 확인.
 - DB 관계는 **꼬리표 컬럼으로만, FOREIGN KEY 제약은 걸지 않는다** (정합성은 soft delete + 앱 로직). FK 제약이 없으면 Supabase 중첩 조회가 안 되니 **조인은 두 번 나눠 읽거나 뷰로**.
