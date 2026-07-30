@@ -1,0 +1,16 @@
+{
+  "name": "@vibe-kit/mobile",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios"
+  },
+  "dependencies": {
+    "expo": "^51.0.0",
+    "react": "^18.3.0",
+    "react-native": "^0.74.0"
+  },
+  "//": "폰 앱을 만들 거면 여기. pnpm install 후 expo start. 안 쓰면 무시해도 됨."
+}

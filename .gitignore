@@ -1,0 +1,31 @@
+# 절대 올리면 안 되는 것 — 금고
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# 빌드 산출물
+node_modules/
+.next/
+dist/
+.turbo/
+.expo/
+
+# 진행상황 훅 산출물
+progress.html
+.progress-snap
+
+# OS
+.DS_Store
+
+# 클로드 코드 개인 로컬 설정 (내 컴퓨터에서만)
+.claude/settings.local.json
+
+# 테스트 산물
+test-results/
+playwright-report/
+.claude/.harness-state.json
+
+# 빌드 검증용 임시 산출물(로컬 전용) — 저장소에 넣지 않는다
+_buildtest/

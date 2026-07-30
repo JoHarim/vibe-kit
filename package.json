@@ -1,0 +1,22 @@
+{
+  "name": "vibe-kit",
+  "private": true,
+  "version": "0.2.0",
+  "description": "바이브코딩 밀키트 — 재료는 다 깔려 있고, 내 아이디어만 얹으면 됨",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@vibe-kit/web",
+    "dev:mobile": "pnpm --filter @vibe-kit/mobile dev",
+    "build": "turbo run build",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "setup": "node scripts/setup.mjs",
+    "adopt": "node scripts/adopt.mjs"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "@playwright/test": "^1.45.0"
+  }
+}

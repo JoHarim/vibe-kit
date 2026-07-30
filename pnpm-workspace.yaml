@@ -1,0 +1,6 @@
+packages:
+  - "apps/web"
+  # 모바일(Expo)을 쓸 때 아래 줄 주석 해제 — 설치 용량이 커서 기본은 끔 (현장 와이파이 배려)
+  # - "apps/mobile"
+  - "packages/ui"
+  - "packages/integrations/*"

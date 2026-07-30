@@ -1,0 +1,10 @@
+{
+  "name": "@vibe-kit/ai",
+  "private": true,
+  "version": "0.2.0",
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  }
+}
