@@ -253,6 +253,7 @@ function adoptAgents() {
   }
   if (!dry) writeFileSync(dstPath, merged);
   log(dry ? "예정" : "병합", `${dstPath} (킷 일반규칙 갱신 · '이번 프로젝트' 섹션은 그대로 보존)`);
+  log("주의", "'이번 프로젝트' 섹션 **밖**에 적어둔 프로젝트 고유 내용은 킷 최신본으로 교체됩니다. 살려야 할 내용은 그 섹션 안으로 옮겨두세요.");
 }
 
 // ---------- 부품: integrations (재료 코드 → lib/integrations/) ----------
