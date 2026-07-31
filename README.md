@@ -42,12 +42,14 @@ pnpm dev                      # http://localhost:3000 — 첫 화면이 뜬다
 ```bash
 # vibe-kit 폴더에서 실행 (--dry 로 미리보기 먼저)
 node scripts/adopt.mjs --into ../내프로젝트 --dry
-node scripts/adopt.mjs --into ../내프로젝트                       # 기본: claude,env,plan
-node scripts/adopt.mjs --into ../내프로젝트 --parts claude,env,plan,integrations,e2e
+node scripts/adopt.mjs --into ../내프로젝트                       # 기본: claude,agents,env,plan
+node scripts/adopt.mjs --into ../내프로젝트 --parts claude,agents,env,plan,integrations,e2e
 ```
 - **먼저 `--dry` 로 뭐가 들어갈지 미리 본다** (아무것도 안 바꾸고 목록만 보여줌)
 - 기존 파일은 **절대 덮지 않는다** (건너뛰고 알려줌 · 덮으려면 `--force`)
 - `settings.json` 은 통째 교체가 아니라 **훅 항목만 병합**
+- `AGENTS.md`(구현 AI 규칙)의 **"이번 프로젝트" 섹션은 `--force` 여도 안 덮는다** — 그 프로젝트만의
+  예외·금지구역이 적히는 자리라, 날아가면 구현 AI 가 규칙을 곧이곧대로 지키다 멀쩡한 기능을 되돌린다
 - 대상의 `.env` 는 **절대 건드리지 않는다**
 - 막히면 클로드에게 물어보기. adopt 는 "안 덮는다"가 원칙이라 안전하지만, 병합 결과가 헷갈리면 물어보는 게 빠르다.
 

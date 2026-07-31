@@ -3,10 +3,10 @@
 //
 // 사용법:
 //   node scripts/adopt.mjs --into /path/to/my-project
-//   node scripts/adopt.mjs --into ../my-app --parts claude,env,plan,integrations,e2e
+//   node scripts/adopt.mjs --into ../my-app --parts claude,agents,env,plan,integrations,e2e
 //
 // 옵션:
-//   --parts  주입할 부품 (기본: claude,env,plan / 추가 가능: integrations,e2e)
+//   --parts  주입할 부품 (기본: claude,agents,env,plan / 추가 가능: integrations,e2e)
 //   --dry    실제 복사 없이 뭘 할지 출력만
 //   --force  기존 파일 덮어쓰기 (기본은 절대 덮지 않음)
 //
@@ -14,6 +14,7 @@
 //   - 대상 프로젝트의 .env 는 절대 건드리지 않는다.
 //   - 기존 파일은 기본적으로 보존 (건너뛰고 알려줌).
 //   - settings.json 은 통째로 덮지 않고 훅 항목만 병합한다.
+//   - AGENTS.md 의 "이번 프로젝트" 섹션(그 프로젝트만의 예외·금지구역)은 --force 여도 절대 안 덮는다.
 import {
   cpSync,
   existsSync,
@@ -37,10 +38,10 @@ function argValue(name) {
 const into = argValue("--into");
 const dry = args.includes("--dry");
 const force = args.includes("--force");
-const parts = (argValue("--parts") ?? "claude,env,plan").split(",").map((s) => s.trim());
+const parts = (argValue("--parts") ?? "claude,agents,env,plan").split(",").map((s) => s.trim());
 
 if (into === null) {
-  console.log("사용법: node scripts/adopt.mjs --into <내 프로젝트 경로> [--parts claude,env,plan,integrations,e2e] [--dry] [--force]");
+  console.log("사용법: node scripts/adopt.mjs --into <내 프로젝트 경로> [--parts claude,agents,env,plan,integrations,e2e] [--dry] [--force]");
   process.exit(1);
 }
 const TARGET = resolve(into);
@@ -175,6 +176,85 @@ function adoptPlan() {
   copyFile(join(KIT, "plan.md"), join(TARGET, "plan.md"));
 }
 
+// ---------- 부품: agents (구현 AI 규칙 — AGENTS.md) ----------
+//
+// AGENTS.md 는 Codex CLI 등 구현 AI 가 저장소 루트에서 자동으로 읽는 파일이다.
+// 이 파일의 "## 이번 프로젝트" 섹션에는 그 프로젝트에만 해당하는 예외·금지구역·게이트가 적히는데,
+// 킷이 그걸 알 방법이 없다. 그래서 **그 섹션은 어떤 경우에도 덮어쓰지 않는다** —
+// 날아가면 구현 AI 가 예외를 모른 채 규칙을 곧이곧대로 적용해 멀쩡한 기능을 되돌린다
+// (2026-07 사주 플래너: 킷의 NEXT_PUBLIC_ 금지를 그대로 적용했다면 로그인이 죽을 뻔했다).
+
+const PROJECT_HEADING = "## 이번 프로젝트";
+
+/** 마크다운에서 특정 `## ` 섹션(다음 `## ` 직전까지)을 잘라낸다. 없으면 null. */
+function sliceSection(text, headingPrefix) {
+  const lines = text.split("\n");
+  const start = lines.findIndex((l) => l.startsWith(headingPrefix));
+  if (start === -1) return null;
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i += 1) {
+    if (lines[i].startsWith("## ")) {
+      end = i;
+      break;
+    }
+  }
+  return { start, end, text: lines.slice(start, end).join("\n").trimEnd() };
+}
+
+/** 킷 본문의 "이번 프로젝트" 섹션을 대상 것으로 갈아끼운다. 못 찾으면 null. */
+function mergeKeepingProjectSection(kitText, dstText) {
+  const kitSec = sliceSection(kitText, PROJECT_HEADING);
+  const dstSec = sliceSection(dstText, PROJECT_HEADING);
+  if (kitSec === null || dstSec === null) return null;
+  const lines = kitText.split("\n");
+  return [
+    ...lines.slice(0, kitSec.start),
+    dstSec.text,
+    "",
+    ...lines.slice(kitSec.end),
+  ].join("\n");
+}
+
+function adoptAgents() {
+  const srcPath = join(KIT, "AGENTS.md");
+  const dstPath = join(TARGET, "AGENTS.md");
+
+  if (!existsSync(srcPath)) {
+    log("주의", "킷에 AGENTS.md 가 없습니다 — 건너뜁니다.");
+    return;
+  }
+  if (!existsSync(dstPath)) {
+    copyFile(srcPath, dstPath);
+    log("안내", "AGENTS.md 의 '이번 프로젝트' 섹션을 이 프로젝트에 맞게 채우세요(구조·예외·금지구역·게이트).");
+    return;
+  }
+
+  const kitText = readFileSync(srcPath, "utf8");
+  const dstText = readFileSync(dstPath, "utf8");
+
+  if (!force) {
+    // 기본은 보존 — 킷 최신본을 옆에 두고 사람이 합치게 한다(settings 와 같은 방식).
+    const sidePath = join(TARGET, "AGENTS.vibe-kit.md");
+    if (!dry) writeFileSync(sidePath, kitText);
+    log(dry ? "예정" : "복사", `${sidePath} (대상 AGENTS.md 는 보존)`);
+    log("주의", "AGENTS.md 가 이미 있어 덮지 않았습니다. 킷 최신 규칙은 AGENTS.vibe-kit.md 를 보고 합치거나, --force 로 '이번 프로젝트' 섹션만 지킨 채 갱신하세요.");
+    return;
+  }
+
+  // --force 여도 통째 덮기는 하지 않는다 — 프로젝트 섹션만은 반드시 지킨다.
+  const merged = mergeKeepingProjectSection(kitText, dstText);
+  if (merged === null) {
+    log("주의", `${dstPath} 에 '${PROJECT_HEADING}' 섹션이 없어 자동 병합을 포기했습니다(덮지 않음). 수동으로 합쳐주세요.`);
+    return;
+  }
+  if (merged === dstText) {
+    log("건너뜀", `${dstPath} (이미 최신)`);
+    return;
+  }
+  if (!dry) writeFileSync(dstPath, merged);
+  log(dry ? "예정" : "병합", `${dstPath} (킷 일반규칙 갱신 · '이번 프로젝트' 섹션은 그대로 보존)`);
+}
+
 // ---------- 부품: integrations (재료 코드 → lib/integrations/) ----------
 function adoptIntegrations() {
   const base = join(KIT, "packages", "integrations");
@@ -198,7 +278,7 @@ console.log(`  키트: ${KIT}`);
 console.log(`  대상: ${TARGET}`);
 console.log(`  부품: ${parts.join(", ")}\n`);
 
-const runners = { claude: adoptClaude, env: adoptEnv, plan: adoptPlan, integrations: adoptIntegrations, e2e: adoptE2e };
+const runners = { claude: adoptClaude, agents: adoptAgents, env: adoptEnv, plan: adoptPlan, integrations: adoptIntegrations, e2e: adoptE2e };
 for (const p of parts) {
   const run = runners[p];
   if (run === undefined) {
