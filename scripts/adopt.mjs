@@ -201,18 +201,49 @@ function sliceSection(text, headingPrefix) {
   return { start, end, text: lines.slice(start, end).join("\n").trimEnd() };
 }
 
-/** 킷 본문의 "이번 프로젝트" 섹션을 대상 것으로 갈아끼운다. 못 찾으면 null. */
+/**
+ * 대상 AGENTS.md 가 "킷 템플릿에서 파생된 파일"인지 판정한다.
+ *
+ * 프로젝트가 자체적으로 쓴 AGENTS.md(킷과 무관한 구성)를 병합하면 그 파일이 킷 템플릿으로
+ * 통째 교체된다 — 남의 문서를 파괴하는 것이라 절대 안 된다. 킷 고유 표제가 보이는 파일만 병합한다.
+ */
+function looksLikeKitTemplate(text) {
+  const marks = ["## 코딩 4원칙", "## 스택 규칙 — 공통", "## 분업 경계"];
+  return marks.filter((m) => text.includes(m)).length >= 2;
+}
+
+/** 첫 `## ` 표제 앞의 머리말(도구가 주입한 블록 등)을 그대로 돌려준다. */
+function preambleOf(text) {
+  const lines = text.split("\n");
+  const first = lines.findIndex((l) => l.startsWith("## "));
+  return first === -1 ? null : lines.slice(0, first).join("\n").trimEnd();
+}
+
+/**
+ * 킷 본문의 "이번 프로젝트" 섹션을 대상 것으로 갈아끼운다. 못 찾으면 null.
+ * 대상의 머리말(예: Next.js 가 주입하는 `<!-- BEGIN:nextjs-agent-rules -->` 블록)도 보존한다.
+ */
 function mergeKeepingProjectSection(kitText, dstText) {
   const kitSec = sliceSection(kitText, PROJECT_HEADING);
   const dstSec = sliceSection(dstText, PROJECT_HEADING);
   if (kitSec === null || dstSec === null) return null;
   const lines = kitText.split("\n");
-  return [
+  const merged = [
     ...lines.slice(0, kitSec.start),
     dstSec.text,
     "",
     ...lines.slice(kitSec.end),
   ].join("\n");
+  // 대상 머리말에만 있는 블록(도구 주입분)이 있으면 앞에 되살린다.
+  const dstPre = preambleOf(dstText);
+  const kitPre = preambleOf(kitText);
+  if (dstPre !== null && kitPre !== null && dstPre !== kitPre && dstPre.includes("<!--")) {
+    const kept = dstPre
+      .split(/\n(?=<!--)/)
+      .filter((block) => block.includes("<!--") && !kitText.includes(block.trim()));
+    if (kept.length > 0) return kept.join("\n") + "\n\n" + merged;
+  }
+  return merged;
 }
 
 function adoptAgents() {
@@ -238,6 +269,16 @@ function adoptAgents() {
     if (!dry) writeFileSync(sidePath, kitText);
     log(dry ? "예정" : "복사", `${sidePath} (대상 AGENTS.md 는 보존)`);
     log("주의", "AGENTS.md 가 이미 있어 덮지 않았습니다. 킷 최신 규칙은 AGENTS.vibe-kit.md 를 보고 합치거나, --force 로 '이번 프로젝트' 섹션만 지킨 채 갱신하세요.");
+    return;
+  }
+
+  // 킷과 무관하게 자체 작성한 AGENTS.md 는 병합 대상이 아니다 — 통째 교체가 되어버린다.
+  if (!looksLikeKitTemplate(dstText)) {
+    log("주의", `${dstPath} 는 킷 템플릿에서 파생된 파일이 아닙니다(자체 작성). 병합하면 통째로 교체되므로 손대지 않았습니다.`);
+    log("안내", "킷 규칙이 필요하면 AGENTS.vibe-kit.md 를 참고해 필요한 대목만 직접 옮기세요.");
+    const sidePath = join(TARGET, "AGENTS.vibe-kit.md");
+    if (!dry) writeFileSync(sidePath, kitText);
+    log(dry ? "예정" : "복사", `${sidePath} (참고용)`);
     return;
   }
 
