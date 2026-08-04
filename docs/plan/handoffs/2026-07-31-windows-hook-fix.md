@@ -29,7 +29,7 @@ vibe-kit 은 비개발자용 바이브코딩 스타터킷이다(원래 맥 부�
 
 - [ ] **3-1. 자기-adopt 가드 수정** — 확인: `--into C:\dev\vibe-kit\docs --dry` 가 `[중단]` 으로 막힌다
 - [ ] **3-2. `--update` 모드 신설** — 확인: 대상의 `plan.md` 가 그대로 남아 있다
-- [ ] **3-3. `claude` 부품에 루트 `AGENTS.md` 복사 추가** — 확인: adopt 후 대상 루트에 AGENTS.md 가 생긴다
+- [x] ~~**3-3. 루트 `AGENTS.md` 복사 추가**~~ — **이미 완료됨(다른 세션에서 `agents` 부품으로 추가, 기본 parts 에 포함). 손대지 마라.**
 - [ ] **3-4. README 에 "킷 업데이트를 기존 프로젝트에 반영하는 법" 3줄**
 
 ---
@@ -110,11 +110,11 @@ Windows 경로는 `C:\dev\vibe-kit\docs` 인데 비교 대상은 `C:\dev\vibe-ki
 - **불가침 (절대 안 건드림)**: `plan.md` · `profile.md` · `docs/plan/**` · `.env` · 대상의 `.claude/CLAUDE.md`
 - 기존 `--force` 는 `plan.md` 까지 덮으므로 위험하다 — `--update` 와 별개로 유지할 것
 
-### 3-3. AGENTS.md 누락
+### 3-3. AGENTS.md 누락 — ✅ 이미 해결됨 (작업 대상 아님)
 
-`adoptClaude()` 가 hooks·skills·agents·CLAUDE.md·settings 만 복사하고 **루트 `AGENTS.md` 를 안 옮긴다**(실측). 이 파일은 구현 AI(너)가 킷 규칙을 읽는 유일한 통로라, 없으면 adopt 된 프로젝트에서 규칙이 전달되지 않는다.
+원래 이 지시서에 있던 항목이나, **다른 세션에서 이미 `agents` 부품으로 구현됐다**(기본 parts = `claude,agents,env,plan`). "이번 프로젝트" 섹션 보존·자체 작성 파일 보호 로직까지 들어가 있다.
 
-**고칠 방향**: `claude` 부품에 `AGENTS.md` 복사 추가. 대상에 이미 있으면 기존 `copyFile` 규칙대로 건너뛴다(**덮지 마라** — 프로젝트별로 직접 쓴 AGENTS.md 가 있는 경우가 실제로 있다).
+**이 부분은 건드리지 마라.** `--update` 모드(3-2)를 만들 때 `agents` 부품의 기존 보호 규칙(프로젝트 섹션 절대 불가침·자체 작성 AGENTS.md 보호)을 **깨뜨리지 않는지만 확인**하면 된다.
 
 ---
 
@@ -137,7 +137,7 @@ Windows 경로는 `C:\dev\vibe-kit\docs` 인데 비교 대상은 `C:\dev\vibe-ki
 - [ ] `plan.md` 없는 폴더에서 progress-html 훅이 무한루프 없이 종료
 - [ ] `node scripts/adopt.mjs --into C:\dev\vibe-kit\docs --dry` → `[중단]` 출력
 - [ ] `--update` 로 임시 폴더에 적용 후 그 폴더의 `plan.md` 내용이 그대로다
-- [ ] adopt 후 대상 루트에 `AGENTS.md` 생성 확인 / 이미 있으면 건너뛰기 확인
+- [ ] `--update` 가 `agents` 부품의 기존 보호(프로젝트 섹션 불가침·자체 작성 파일 보호)를 깨지 않는다
 - [ ] 커밋하지 않고 멈춤
 
 ---
